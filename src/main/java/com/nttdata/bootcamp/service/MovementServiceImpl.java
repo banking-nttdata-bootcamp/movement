@@ -28,6 +28,14 @@ public class MovementServiceImpl implements MovementService {
     }
 
     @Override
+    public Flux<Movement> findCommissionByAccountNumber(String accountNumber, String typeMovement) {
+        Flux<Movement> movementsFlux = movementRepository
+                .findAll()
+                .filter(x -> x.getAccountNumber().equals(accountNumber) && x.getTypeMovement().equals(typeMovement));
+        return movementsFlux;
+    }
+
+    @Override
     public Mono<Movement> findByNumber(String Number) {
         Mono<Movement> movementsMono = movementRepository
                 .findAll()

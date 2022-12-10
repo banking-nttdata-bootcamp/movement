@@ -10,17 +10,29 @@ import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 
 import java.util.ArrayList;
-
+import java.util.Date;
 @CrossOrigin(origins = "*")
 @RestController
-@RequestMapping(value = "/movement")
+@RequestMapping(value = "/report")
 public class ReportController {
     private static final Logger LOGGER = LoggerFactory.getLogger(MovementController.class);
     @Autowired
     private MovementService movementService;
 
+    @GetMapping("/getCommissionsByAccount/{accountNumber}/{date1}/{date2}")
+    public Flux<MovementDto> getCommissionsByAccount(@PathVariable("accountNumber") String accountNumber,
+                                                     @PathVariable("accountNumber") Date date1,
+                                                     @PathVariable("accountNumber") Date date2) {
+        ArrayList<MovementDto> movementDtoArrayList = new ArrayList<MovementDto>();
+        Flux<Movement> movementsFlux = movementService.findCommissionByAccountNumber(accountNumber,"commission");
+        movementsFlux
+                .toStream()
+                .filter( x -> x.getCreationDate().after(date1) && x.getCreationDate().before(date1));
 
-    //Transfer search
+        return Flux.fromStream(movementDtoArrayList.stream());
+    }
+
+    //Report Find top 10 movements of debit and credit card
     @GetMapping("/findTopMovements/{accountNumber}")
     public Flux<MovementDto> findTopMovements(@PathVariable("accountNumber") String accountNumber) {
         ArrayList<MovementDto> movementDtoArrayList = new ArrayList<MovementDto>();

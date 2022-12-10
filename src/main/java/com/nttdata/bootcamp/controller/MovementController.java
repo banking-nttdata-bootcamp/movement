@@ -22,7 +22,7 @@ public class MovementController {
 	private MovementService movementService;
 
 
-	//Transfer search
+	//Movement search
 	@GetMapping("/findAllMovements")
 	public Flux<Movement> findAllMovements() {
 		Flux<Movement> movementsFlux = movementService.findAll();
@@ -30,7 +30,7 @@ public class MovementController {
 		return movementsFlux;
 	}
 
-	//Transfer by AccountNumber
+	//Movement by AccountNumber
 	@GetMapping("/findAllMovementsByNumber/{accountNumber}")
 	public Flux<Movement> findAllMovementsByNumber(@PathVariable("accountNumber") String accountNumber) {
 		Flux<Movement> movementsFlux = movementService.findByAccountNumber(accountNumber);
@@ -38,7 +38,7 @@ public class MovementController {
 		return movementsFlux;
 	}
 
-	//Transfer  by transactionNumber
+	//Movement  by transactionNumber
 	@CircuitBreaker(name = "movement", fallbackMethod = "fallBackGetMovement")
 	@GetMapping("/findByMovementNumber/{numberMovement}")
 	public Mono<Movement> findByMovementNumber(@PathVariable("numberMovement") String numberMovement) {
@@ -46,7 +46,7 @@ public class MovementController {
 		return movementService.findByNumber(numberMovement);
 	}
 
-	//Save Transfer
+	//Save movement
 	@CircuitBreaker(name = "movement", fallbackMethod = "fallBackGetMovement")
 	@PostMapping(value = "/saveMovement/{typeMovement}")
 	public Mono<Movement> saveMovement(@RequestBody Movement dataMovement, @PathVariable("typeMovement") String typeMovement){
@@ -55,6 +55,22 @@ public class MovementController {
 					t.setCreationDate(new Date());
 					t.setModificationDate(new Date());
 					t.setTypeMovement(typeMovement);
+
+				}).onErrorReturn(dataMovement).onErrorResume(e -> Mono.just(dataMovement))
+				.onErrorMap(f -> new InterruptedException(f.getMessage())).subscribe(x -> LOGGER.info(x.toString()));
+
+		Mono<Movement> movementsMono = movementService.saveMovement(dataMovement);
+		return movementsMono;
+	}
+
+	@CircuitBreaker(name = "movement", fallbackMethod = "fallBackGetMovement")
+	@PostMapping(value = "/saveCommission")
+	public Mono<Movement> saveCommission(@RequestBody Movement dataMovement){
+		Mono.just(dataMovement).doOnNext(t -> {
+
+					t.setCreationDate(new Date());
+					t.setModificationDate(new Date());
+					t.setTypeMovement("commission");
 
 				}).onErrorReturn(dataMovement).onErrorResume(e -> Mono.just(dataMovement))
 				.onErrorMap(f -> new InterruptedException(f.getMessage())).subscribe(x -> LOGGER.info(x.toString()));
@@ -95,7 +111,7 @@ public class MovementController {
 
 
 
-	//Update Transfer
+	//Update Movement
 	@CircuitBreaker(name = "movement", fallbackMethod = "fallBackGetMovement")
 	@PutMapping("/updateMovements/{numberMovement}")
 	public Mono<Movement> updateMovements(@PathVariable("numberTransfer") String numberMovements,
@@ -113,7 +129,7 @@ public class MovementController {
 	}
 
 
-	//Delete Transfer
+	//Delete Movement
 	@CircuitBreaker(name = "movement", fallbackMethod = "fallBackGetMovement")
 	@DeleteMapping("/deleteMovement/{numberMovement}")
 	public Mono<Void> deleteMovement(@PathVariable("numberTransaction") String numberMovement) {
