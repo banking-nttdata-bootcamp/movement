@@ -21,13 +21,13 @@ public class ReportController {
 
     @GetMapping("/getCommissionsByAccount/{accountNumber}/{date1}/{date2}")
     public Flux<MovementDto> getCommissionsByAccount(@PathVariable("accountNumber") String accountNumber,
-                                                     @PathVariable("accountNumber") Date date1,
-                                                     @PathVariable("accountNumber") Date date2) {
+                                                     @PathVariable("date1") Date date1,
+                                                     @PathVariable("date2") Date date2) {
         ArrayList<MovementDto> movementDtoArrayList = new ArrayList<MovementDto>();
         Flux<Movement> movementsFlux = movementService.findCommissionByAccountNumber(accountNumber,"commission");
         movementsFlux
                 .toStream()
-                .filter( x -> x.getCreationDate().after(date1) && x.getCreationDate().before(date1));
+                .filter( x -> x.getCreationDate().after(date1) && x.getCreationDate().before(date2));
 
         return Flux.fromStream(movementDtoArrayList.stream());
     }
