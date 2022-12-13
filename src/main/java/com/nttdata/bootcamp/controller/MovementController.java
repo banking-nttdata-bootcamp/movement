@@ -47,14 +47,21 @@ public class MovementController {
 	}
 
 	//Save movement
+	//typeMovement deposit, payment, charge etc.
 	@CircuitBreaker(name = "movement", fallbackMethod = "fallBackGetMovement")
 	@PostMapping(value = "/saveMovement/{typeMovement}")
-	public Mono<Movement> saveMovement(@RequestBody Movement dataMovement, @PathVariable("typeMovement") String typeMovement){
+	public Mono<Movement> saveMovement(@RequestBody Movement dataMovement,
+									   @PathVariable("typeMovement") String typeMovement,
+									   @PathVariable("flagType") String flagType){
 		Mono.just(dataMovement).doOnNext(t -> {
 
 					t.setCreationDate(new Date());
 					t.setModificationDate(new Date());
 					t.setTypeMovement(typeMovement);
+					if(flagType.equals("DEBIT")){
+						t.setFlagDebit(true);
+						t.setFlagCredit(false);
+					}
 
 				}).onErrorReturn(dataMovement).onErrorResume(e -> Mono.just(dataMovement))
 				.onErrorMap(f -> new InterruptedException(f.getMessage())).subscribe(x -> LOGGER.info(x.toString()));
@@ -71,6 +78,8 @@ public class MovementController {
 					t.setCreationDate(new Date());
 					t.setModificationDate(new Date());
 					t.setTypeMovement("commission");
+					t.setFlagDebit(true);
+					t.setFlagCredit(false);
 
 				}).onErrorReturn(dataMovement).onErrorResume(e -> Mono.just(dataMovement))
 				.onErrorMap(f -> new InterruptedException(f.getMessage())).subscribe(x -> LOGGER.info(x.toString()));
@@ -86,6 +95,8 @@ public class MovementController {
 					t.setCreationDate(new Date());
 					t.setModificationDate(new Date());
 					t.setTypeMovement("Transfer");
+					t.setFlagDebit(true);
+					t.setFlagCredit(false);
 
 				}).onErrorReturn(dataMovement).onErrorResume(e -> Mono.just(dataMovement))
 				.onErrorMap(f -> new InterruptedException(f.getMessage())).subscribe(x -> LOGGER.info(x.toString()));
@@ -101,6 +112,8 @@ public class MovementController {
 					t.setCreationDate(new Date());
 					t.setModificationDate(new Date());
 					t.setTypeMovement("Transfer");
+					t.setFlagDebit(false);
+					t.setFlagCredit(true);
 
 				}).onErrorReturn(dataMovement).onErrorResume(e -> Mono.just(dataMovement))
 				.onErrorMap(f -> new InterruptedException(f.getMessage())).subscribe(x -> LOGGER.info(x.toString()));

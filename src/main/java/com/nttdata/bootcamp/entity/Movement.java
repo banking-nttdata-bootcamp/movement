@@ -29,6 +29,10 @@ public class Movement {
     private Double amount;
     private String status;
 
+    private boolean flagDebit;
+    private boolean flagCredit;
+
+
     @JsonFormat(pattern = "yyyy-MM-dd")
     @CreatedDate
     private Date creationDate;
