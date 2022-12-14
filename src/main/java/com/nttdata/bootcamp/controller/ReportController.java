@@ -23,13 +23,13 @@ public class ReportController {
     private MovementService movementService;
 
     @GetMapping("/getCommissionsByAccount/{accountNumber}/{date1}/{date2}")
-    public Flux<Movement> getCommissionsByAccount(@PathVariable("accountNumber") String accountNumber,
+    public Flux<MovementDto> getCommissionsByAccount(@PathVariable("accountNumber") String accountNumber,
                                                   @PathVariable("date1") String date1,
                                                   @PathVariable("date2") String date2) {
-        ArrayList<MovementDto> movementDtoArrayList = new ArrayList<MovementDto>();
-        SimpleDateFormat formato = new SimpleDateFormat("dd/MM/yyyy");
 
-            Flux<Movement> movementsFlux = movementService.findCommissionByAccountNumber(accountNumber,"commission");
+        SimpleDateFormat formato = new SimpleDateFormat("dd-MM-yyyy");
+            ArrayList<MovementDto> movements = new ArrayList<MovementDto>();
+            Flux<Movement> movementsFlux = movementService.findCommissionByAccountNumber(accountNumber);
             movementsFlux
                     .toStream()
                     .filter( x -> {
@@ -40,16 +40,16 @@ public class ReportController {
                         }
                     });
 
-        //return Flux.fromStream(movementDtoArrayList.stream());
-        return movementsFlux;
+        movementsFlux.toStream().forEach( x -> movements.add(new MovementDto(x.getDni(), x.getAccountNumber(),x.getMovementNumber(), x.getAmount())));
+        return Flux.fromStream(movements.stream());
     }
     //report general of product
     @GetMapping("/getReportByProduct/{accountNumber}/{date1}/{date2}")
-    public Flux<Movement> getReportByProduct(@PathVariable("accountNumber") String accountNumber,
+    public Flux<MovementDto> getReportByProduct(@PathVariable("accountNumber") String accountNumber,
                                                   @PathVariable("date1") String date1,
                                                   @PathVariable("date2") String date2) {
-        ArrayList<MovementDto> movementDtoArrayList = new ArrayList<MovementDto>();
-        SimpleDateFormat formato = new SimpleDateFormat("dd/MM/yyyy");
+        ArrayList<MovementDto> movements = new ArrayList<MovementDto>();
+        SimpleDateFormat formato = new SimpleDateFormat("dd-MM-yyyy");
 
         Flux<Movement> movementsFlux = movementService.findByAccountNumber(accountNumber);
         movementsFlux
@@ -62,20 +62,21 @@ public class ReportController {
                     }
                 });
 
-        //return Flux.fromStream(movementDtoArrayList.stream());
-        return movementsFlux;
+        movementsFlux.toStream().forEach( x -> movements.add(new MovementDto(x.getDni(), x.getAccountNumber(),x.getMovementNumber(), x.getAmount())));
+        return Flux.fromStream(movements.stream());
     }
 
     //Report Find top 10 movements of debit and credit card
     @GetMapping("/findTopMovements/{accountNumber}")
     public Flux<MovementDto> findTopMovements(@PathVariable("accountNumber") String accountNumber) {
-        ArrayList<MovementDto> movementDtoArrayList = new ArrayList<MovementDto>();
+        ArrayList<MovementDto> movements = new ArrayList<MovementDto>();
         Flux<Movement> movementsFlux = movementService.findByAccountNumber(accountNumber);
         movementsFlux
                 .toStream()
-                .forEach( x -> movementDtoArrayList.add(new MovementDto(x.getMovementNumber(), x.getAmount(), x.getStatus())));
+                .forEach( x -> movements.add(new MovementDto(x.getDni(),x.getAccountNumber(), x.getMovementNumber(), x.getAmount())));
 
-        return Flux.fromStream(movementDtoArrayList.stream().limit(10));
+        return Flux.fromStream(movements.stream().limit(10));
+
     }
 
 }

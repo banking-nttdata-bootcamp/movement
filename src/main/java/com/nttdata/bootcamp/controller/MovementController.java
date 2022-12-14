@@ -1,6 +1,7 @@
 package com.nttdata.bootcamp.controller;
 
 import com.nttdata.bootcamp.entity.Movement;
+import com.nttdata.bootcamp.entity.dto.MovementDto;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,34 +51,38 @@ public class MovementController {
 	//typeMovement deposit, payment, charge etc.
 	@CircuitBreaker(name = "movement", fallbackMethod = "fallBackGetMovement")
 	@PostMapping(value = "/saveMovement/{typeMovement}")
-	public Mono<Movement> saveMovement(@RequestBody Movement dataMovement,
-									   @PathVariable("typeMovement") String typeMovement,
+	public Mono<Movement> saveMovement(@RequestBody MovementDto dataMovement,
+									   @PathVariable("typeTransaction") String typeTransaction,
 									   @PathVariable("flagType") String flagType){
-		Mono.just(dataMovement).doOnNext(t -> {
-
+		Movement movement= new Movement();
+		Mono.just(movement).doOnNext(t -> {
+					t.setAmount(dataMovement.getAmount());
+					t.setDni(dataMovement.getDni());
+					t.setMovementNumber(dataMovement.getMovementNumber());
+					t.setAmount(dataMovement.getAmount());
 					t.setCreationDate(new Date());
 					t.setModificationDate(new Date());
-					t.setTypeMovement(typeMovement);
+					t.setTypeTransaction(typeTransaction);
 					if(flagType.equals("DEBIT")){
 						t.setFlagDebit(true);
 						t.setFlagCredit(false);
 					}
 
-				}).onErrorReturn(dataMovement).onErrorResume(e -> Mono.just(dataMovement))
+				}).onErrorReturn(movement).onErrorResume(e -> Mono.just(movement))
 				.onErrorMap(f -> new InterruptedException(f.getMessage())).subscribe(x -> LOGGER.info(x.toString()));
 
-		Mono<Movement> movementsMono = movementService.saveMovement(dataMovement);
+		Mono<Movement> movementsMono = movementService.saveMovement(movement);
 		return movementsMono;
 	}
 
-	@CircuitBreaker(name = "movement", fallbackMethod = "fallBackGetMovement")
+	/*@CircuitBreaker(name = "movement", fallbackMethod = "fallBackGetMovement")
 	@PostMapping(value = "/saveCommission")
 	public Mono<Movement> saveCommission(@RequestBody Movement dataMovement ){
 		Mono.just(dataMovement).doOnNext(t -> {
 
 					t.setCreationDate(new Date());
 					t.setModificationDate(new Date());
-					t.setTypeMovement("commission");
+					t.setTypeTransaction("commission");
 					t.setFlagDebit(true);
 					t.setFlagCredit(false);
 
@@ -85,6 +90,16 @@ public class MovementController {
 				.onErrorMap(f -> new InterruptedException(f.getMessage())).subscribe(x -> LOGGER.info(x.toString()));
 
 		Mono<Movement> movementsMono = movementService.saveMovement(dataMovement);
+		return movementsMono;
+	}*/
+
+	@CircuitBreaker(name = "movement", fallbackMethod = "fallBackGetMovement")
+	@PostMapping(value = "/updateCommission")
+	public Mono<Movement> updateCommission( @PathVariable("numberTransaction") String numberTransaction,
+											@PathVariable("commission") Double commission){
+		Mono<Movement> movementMono= findByMovementNumber(numberTransaction);
+		movementMono.block().setCommission(commission);
+		Mono<Movement> movementsMono = movementService.saveMovement(movementMono.block());
 		return movementsMono;
 	}
 
@@ -94,7 +109,7 @@ public class MovementController {
 
 					t.setCreationDate(new Date());
 					t.setModificationDate(new Date());
-					t.setTypeMovement("Transfer");
+					t.setTypeTransaction("Transfer");
 					t.setFlagDebit(true);
 					t.setFlagCredit(false);
 
@@ -111,7 +126,7 @@ public class MovementController {
 
 					t.setCreationDate(new Date());
 					t.setModificationDate(new Date());
-					t.setTypeMovement("Transfer");
+					t.setTypeTransaction("Transfer");
 					t.setFlagDebit(false);
 					t.setFlagCredit(true);
 

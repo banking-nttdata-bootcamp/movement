@@ -28,10 +28,10 @@ public class MovementServiceImpl implements MovementService {
     }
 
     @Override
-    public Flux<Movement> findCommissionByAccountNumber(String accountNumber, String typeMovement) {
+    public Flux<Movement> findCommissionByAccountNumber(String accountNumber) {
         Flux<Movement> movementsFlux = movementRepository
                 .findAll()
-                .filter(x -> x.getAccountNumber().equals(accountNumber) && x.getTypeMovement().equals(typeMovement));
+                .filter(x -> x.getAccountNumber().equals(accountNumber) && x.getCommission()>0);
         return movementsFlux;
     }
 
@@ -59,7 +59,7 @@ public class MovementServiceImpl implements MovementService {
             dataMovement.setAmount(transactionMono.block().getAmount());
             dataMovement.setAccountNumber(transactionMono.block().getAccountNumber());
             dataMovement.setMovementNumber(transactionMono.block().getMovementNumber());
-            dataMovement.setTypeMovement(transactionMono.block().getTypeMovement());
+            dataMovement.setTypeTransaction(transactionMono.block().getTypeTransaction());
             dataMovement.setStatus(transactionMono.block().getStatus());
             dataMovement.setCreationDate(transactionMono.block().getCreationDate());
             return movementRepository.save(dataMovement);

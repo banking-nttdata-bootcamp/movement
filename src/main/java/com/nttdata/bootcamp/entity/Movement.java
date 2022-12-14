@@ -24,13 +24,15 @@ public class Movement {
 
     private String dni;
     private String accountNumber;
-    private String typeMovement;
+    private String typeTransaction;
     private String movementNumber;
     private Double amount;
     private String status;
 
     private boolean flagDebit;
     private boolean flagCredit;
+
+    private Double commission;
 
 
     @JsonFormat(pattern = "yyyy-MM-dd")
