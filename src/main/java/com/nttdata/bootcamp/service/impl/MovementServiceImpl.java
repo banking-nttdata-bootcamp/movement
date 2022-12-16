@@ -1,7 +1,8 @@
-package com.nttdata.bootcamp.service;
+package com.nttdata.bootcamp.service.impl;
 
 import com.nttdata.bootcamp.entity.Movement;
 import com.nttdata.bootcamp.repository.MovementRepository;
+import com.nttdata.bootcamp.service.MovementService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
