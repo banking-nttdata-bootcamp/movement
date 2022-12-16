@@ -110,8 +110,6 @@ public class MovementController {
 					t.setCreationDate(new Date());
 					t.setModificationDate(new Date());
 					t.setTypeTransaction("Transfer");
-					t.setFlagDebit(true);
-					t.setFlagCredit(false);
 
 				}).onErrorReturn(dataMovement).onErrorResume(e -> Mono.just(dataMovement))
 				.onErrorMap(f -> new InterruptedException(f.getMessage())).subscribe(x -> LOGGER.info(x.toString()));
@@ -127,8 +125,7 @@ public class MovementController {
 					t.setCreationDate(new Date());
 					t.setModificationDate(new Date());
 					t.setTypeTransaction("Transfer");
-					t.setFlagDebit(false);
-					t.setFlagCredit(true);
+
 
 				}).onErrorReturn(dataMovement).onErrorResume(e -> Mono.just(dataMovement))
 				.onErrorMap(f -> new InterruptedException(f.getMessage())).subscribe(x -> LOGGER.info(x.toString()));
