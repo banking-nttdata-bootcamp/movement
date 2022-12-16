@@ -49,7 +49,7 @@ public class MovementController {
 
 	//Save movement
 	//typeMovement deposit, payment, charge etc.
-	@CircuitBreaker(name = "movement", fallbackMethod = "fallBackGetMovement")
+	/*@CircuitBreaker(name = "movement", fallbackMethod = "fallBackGetMovement")
 	@PostMapping(value = "/saveMovement/{typeMovement}")
 	public Mono<Movement> saveMovement(@RequestBody MovementDto dataMovement,
 									   @PathVariable("typeTransaction") String typeTransaction,
@@ -73,7 +73,7 @@ public class MovementController {
 
 		Mono<Movement> movementsMono = movementService.saveMovement(movement);
 		return movementsMono;
-	}
+	}*/
 
 	/*@CircuitBreaker(name = "movement", fallbackMethod = "fallBackGetMovement")
 	@PostMapping(value = "/saveCommission")

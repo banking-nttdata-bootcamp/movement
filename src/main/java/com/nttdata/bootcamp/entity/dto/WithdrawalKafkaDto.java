@@ -2,8 +2,9 @@ package com.nttdata.bootcamp.entity.dto;
 
 import lombok.Data;
 import org.springframework.data.annotation.Id;
+
 @Data
-public class PaymentKafkaDto {
+public class WithdrawalKafkaDto {
     @Id
     private String id;
 
@@ -11,8 +12,9 @@ public class PaymentKafkaDto {
     private String accountNumber;
     private String typeAccount;
 
-    private String paymentNumber;
+    private String withdrawalNumber;
     private Double amount;
     private Double commission;
     private String status;
+
 }
