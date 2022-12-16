@@ -47,11 +47,6 @@ public class KafkaServiceImpl implements KafkaService {
         }
     }
 
-    @KafkaListener(
-            topics = "${topic.customer.name:topic_payment}",
-            containerFactory = "kafkaListenerContainerFactory",
-            groupId = "grupo1")
-
 
     @KafkaListener(
             topics = "${topic.customer.name:topic_withdrawal}",
@@ -77,6 +72,10 @@ public class KafkaServiceImpl implements KafkaService {
         }
     }
 
+    @KafkaListener(
+            topics = "${topic.customer.name:topic_payment}",
+            containerFactory = "kafkaListenerContainerFactory",
+            groupId = "grupo1")
     public void consumerPaymentSave(EventKafka<?> eventKafka) {
         if (eventKafka.getClass().isAssignableFrom(PaymentCreatedEventKafka.class)) {
             PaymentCreatedEventKafka customerCreatedEvent = (PaymentCreatedEventKafka) eventKafka;
