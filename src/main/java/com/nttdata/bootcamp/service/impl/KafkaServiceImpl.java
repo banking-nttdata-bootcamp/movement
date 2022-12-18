@@ -5,17 +5,22 @@ import com.nttdata.bootcamp.entity.dto.ChargeConsumptionKafkaDto;
 import com.nttdata.bootcamp.entity.dto.DepositKafkaDto;
 import com.nttdata.bootcamp.entity.dto.PaymentKafkaDto;
 import com.nttdata.bootcamp.entity.dto.WithdrawalKafkaDto;
+import com.nttdata.bootcamp.entity.dto.VirtualCoinKafkaDto;
 import com.nttdata.bootcamp.events.EventKafka;
 import com.nttdata.bootcamp.events.DepositCreatedEventKafka;
 import com.nttdata.bootcamp.events.WithdrawalCreatedEventKafka;
 import com.nttdata.bootcamp.events.PaymentCreatedEventKafka;
 import com.nttdata.bootcamp.events.ChargeConsumptionCreatedEventKafka;
+import com.nttdata.bootcamp.events.VirtualCoinCreatedEventKafka;
 import com.nttdata.bootcamp.repository.MovementRepository;
 import com.nttdata.bootcamp.service.KafkaService;
+import com.nttdata.bootcamp.util.Constant;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
+
+import java.util.Date;
 
 @Slf4j
 @Service
@@ -66,6 +71,9 @@ public class KafkaServiceImpl implements KafkaService {
             movement.setAmount(KafkaDto.getAmount()*-1);
             movement.setCommission(KafkaDto.getCommission());
             movement.setTypeTransaction("WITHDRAWAL");
+            movement.setCreationDate(new Date());
+            movement.setModificationDate(new Date());
+            movement.setStatus(Constant.STATUS);
 
 
             this.movementRepository.save(movement).subscribe();
@@ -90,6 +98,9 @@ public class KafkaServiceImpl implements KafkaService {
             movement.setAmount(KafkaDto.getAmount());
             movement.setCommission(KafkaDto.getCommission());
             movement.setTypeTransaction("PAYMENT");
+            movement.setCreationDate(new Date());
+            movement.setModificationDate(new Date());
+            movement.setStatus(Constant.STATUS);
 
 
             this.movementRepository.save(movement).subscribe();
@@ -115,8 +126,39 @@ public class KafkaServiceImpl implements KafkaService {
             movement.setAmount(KafkaDto.getAmount()*-1);
             movement.setCommission(KafkaDto.getCommission());
             movement.setTypeTransaction("CHARGE");
+            movement.setCreationDate(new Date());
+            movement.setModificationDate(new Date());
+            movement.setStatus(Constant.STATUS);
 
             this.movementRepository.save(movement).subscribe();
+        }
+    }
+
+    @KafkaListener(
+            topics = "${topic.customer.name:topic_virtualCoin}",
+            containerFactory = "kafkaListenerContainerFactory",
+            groupId = "grupo1")
+    public void consumerVirtualCoinSave(EventKafka<?> eventKafka) {
+        if (eventKafka.getClass().isAssignableFrom(VirtualCoinCreatedEventKafka.class)) {
+            VirtualCoinCreatedEventKafka customerCreatedEvent = (VirtualCoinCreatedEventKafka) eventKafka;
+            log.info("Received Data created event .... with Id={}, data={}",
+                    customerCreatedEvent.getId(),
+                    customerCreatedEvent.getData().toString());
+            VirtualCoinKafkaDto KafkaDto = ((VirtualCoinCreatedEventKafka) eventKafka).getData();
+            if(KafkaDto.getFlagDebitCard()){
+                Movement movement = new Movement();
+                movement.setDni(KafkaDto.getDni());
+                movement.setAccountNumber(KafkaDto.getNumberAccount());
+                movement.setMovementNumber("");
+                movement.setAmount(KafkaDto.getMount());
+                movement.setCommission(0.00);
+                movement.setTypeTransaction("virtualCoin");
+                movement.setCreationDate(new Date());
+                movement.setModificationDate(new Date());
+                movement.setStatus(Constant.STATUS);
+                this.movementRepository.save(movement).subscribe();
+            }
+
         }
     }
 
