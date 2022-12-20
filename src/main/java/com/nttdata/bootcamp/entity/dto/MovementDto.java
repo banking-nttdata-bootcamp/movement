@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class MovementDto {
+
         private String dni;
         private String accountNumber;
         private String movementNumber;

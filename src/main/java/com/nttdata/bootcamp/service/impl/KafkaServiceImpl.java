@@ -6,21 +6,22 @@ import com.nttdata.bootcamp.entity.dto.DepositKafkaDto;
 import com.nttdata.bootcamp.entity.dto.PaymentKafkaDto;
 import com.nttdata.bootcamp.entity.dto.WithdrawalKafkaDto;
 import com.nttdata.bootcamp.entity.dto.VirtualCoinKafkaDto;
-import com.nttdata.bootcamp.events.EventKafka;
-import com.nttdata.bootcamp.events.DepositCreatedEventKafka;
-import com.nttdata.bootcamp.events.WithdrawalCreatedEventKafka;
-import com.nttdata.bootcamp.events.PaymentCreatedEventKafka;
-import com.nttdata.bootcamp.events.ChargeConsumptionCreatedEventKafka;
-import com.nttdata.bootcamp.events.VirtualCoinCreatedEventKafka;
+import com.nttdata.bootcamp.entity.enums.EventType;
+import com.nttdata.bootcamp.events.*;
 import com.nttdata.bootcamp.repository.MovementRepository;
 import com.nttdata.bootcamp.service.KafkaService;
+import com.nttdata.bootcamp.service.MovementService;
 import com.nttdata.bootcamp.util.Constant;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
 
 import java.util.Date;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -28,6 +29,26 @@ public class KafkaServiceImpl implements KafkaService {
 
     @Autowired
     private MovementRepository movementRepository;
+    @Autowired
+    private MovementService movementService;
+
+    @Autowired
+    private KafkaTemplate<String, EventKafka<?>> producer;
+
+    @Value("${topic.movement.name}")
+    private String topicMovement;
+
+    public void publish(Movement movement) {
+
+        MovementCreatedEventKafka created = new MovementCreatedEventKafka();
+        created.setData(movement);
+        created.setId(UUID.randomUUID().toString());
+        created.setType(EventType.CREATED);
+        created.setDate(new Date());
+
+        this.producer.send(topicMovement, created);
+    }
+
 
     @KafkaListener(
             topics = "${topic.customer.name:topic_deposit}",
@@ -40,15 +61,23 @@ public class KafkaServiceImpl implements KafkaService {
                     customerCreatedEvent.getId(),
                     customerCreatedEvent.getData().toString());
             DepositKafkaDto rKafkaDto = ((DepositCreatedEventKafka) eventKafka).getData();
+            Long count=movementService.findByAccountNumber(rKafkaDto.getAccountNumber()).count().block();
             Movement movement = new Movement();
+            if(count>Constant.COUNT_TRANSACTIONS)
+                movement.setCommission(Constant.COMMISSION_TRANSACTIONS);
+            else{
+                movement.setCommission(rKafkaDto.getCommission());
+            }
             movement.setDni(rKafkaDto.getDni());
             movement.setMovementNumber(rKafkaDto.getDepositNumber());
             movement.setAccountNumber(rKafkaDto.getAccountNumber());
             movement.setAmount(rKafkaDto.getAmount());
-            movement.setCommission(rKafkaDto.getCommission());
-            movement.setTypeTransaction("DEPOSIT");
 
-            this.movementRepository.save(movement).subscribe();
+            movement.setTypeTransaction("DEPOSIT");
+            movement.setCreationDate(new Date());
+            movement.setModificationDate(new Date());
+            movement.setStatus(Constant.STATUS);
+            saveTopic(movement).subscribe();
         }
     }
 
@@ -64,7 +93,13 @@ public class KafkaServiceImpl implements KafkaService {
                     customerCreatedEvent.getId(),
                     customerCreatedEvent.getData().toString());
             WithdrawalKafkaDto KafkaDto = ((WithdrawalCreatedEventKafka) eventKafka).getData();
+            Long count=movementService.findByAccountNumber(KafkaDto.getAccountNumber()).count().block();
             Movement movement = new Movement();
+            if(count>Constant.COUNT_TRANSACTIONS)
+                movement.setCommission(Constant.COMMISSION_TRANSACTIONS);
+            else{
+                movement.setCommission(KafkaDto.getCommission());
+            }
             movement.setDni(KafkaDto.getDni());
             movement.setMovementNumber(KafkaDto.getWithdrawalNumber());
             movement.setAccountNumber(KafkaDto.getAccountNumber());
@@ -76,7 +111,7 @@ public class KafkaServiceImpl implements KafkaService {
             movement.setStatus(Constant.STATUS);
 
 
-            this.movementRepository.save(movement).subscribe();
+            saveTopic(movement).subscribe();
         }
     }
 
@@ -103,7 +138,7 @@ public class KafkaServiceImpl implements KafkaService {
             movement.setStatus(Constant.STATUS);
 
 
-            this.movementRepository.save(movement).subscribe();
+            saveTopic(movement).subscribe();
         }
     }
 
@@ -130,7 +165,7 @@ public class KafkaServiceImpl implements KafkaService {
             movement.setModificationDate(new Date());
             movement.setStatus(Constant.STATUS);
 
-            this.movementRepository.save(movement).subscribe();
+            saveTopic(movement).subscribe();
         }
     }
 
@@ -156,10 +191,16 @@ public class KafkaServiceImpl implements KafkaService {
                 movement.setCreationDate(new Date());
                 movement.setModificationDate(new Date());
                 movement.setStatus(Constant.STATUS);
-                this.movementRepository.save(movement).subscribe();
+                saveTopic(movement).subscribe();
             }
 
         }
+    }
+
+    public Mono<Movement> saveTopic(Movement dataMovement){
+        Mono<Movement> monoMovement = movementRepository.save(dataMovement);
+        publish(monoMovement.block());
+        return monoMovement;
     }
 
 }
